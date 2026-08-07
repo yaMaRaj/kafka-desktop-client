@@ -1,0 +1,329 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #f0f2f5;
+}
+
+/* Full-viewport app shell */
+.app-root.ant-layout {
+  height: 100vh !important;
+  max-height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.app-sider.ant-layout-sider {
+  height: 100vh !important;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.app-sider .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  background: #001529;
+}
+
+.app-sider-brand {
+  flex-shrink: 0;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-sider-menu.ant-menu {
+  flex: 1 1 auto;
+  overflow-y: auto !important;
+  border-inline-end: none !important;
+  background: transparent !important;
+}
+
+.app-main.ant-layout {
+  height: 100vh !important;
+  max-height: 100vh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f0f2f5;
+}
+
+.app-header.ant-layout-header {
+  flex: 0 0 56px;
+  height: 56px !important;
+  line-height: 56px !important;
+  background: #fff !important;
+  padding: 0 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.app-content.ant-layout-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto !important;
+  padding: 12px 16px 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #f0f2f5;
+}
+
+/* Spin must pass height to page */
+.app-content > .ant-spin-nested-loading {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content .ant-spin-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content .ant-spin-container > * {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+/* Page panel */
+.page-card {
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid #e8eaef;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  padding: 0;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.page-card-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.page-card-toolbar {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  border-bottom: 1px solid #f5f5f5;
+  background: #fafafa;
+}
+
+/* Inline form / action buttons: consistent gaps, never flush together */
+.page-card-toolbar .ant-form-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.page-card-toolbar .ant-form-inline > .ant-form-item {
+  margin-inline-end: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.toolbar-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-card-header .ant-space,
+.page-card-footer .ant-space {
+  flex-wrap: wrap;
+}
+
+.page-card-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 12px 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-card-body.is-scroll {
+  overflow: auto;
+}
+
+.page-card-footer {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  border-top: 1px solid #f0f0f0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+/* Table fills remaining body */
+.table-fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.table-fill .ant-table-wrapper,
+.table-fill .ant-spin-nested-loading,
+.table-fill .ant-spin-container {
+  height: 100%;
+}
+
+.table-fill .ant-table {
+  height: 100%;
+}
+
+.table-fill .ant-table-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-fill .ant-table-header {
+  flex: 0 0 auto;
+}
+
+.table-fill .ant-table-body {
+  flex: 1 1 auto !important;
+  overflow: auto !important;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.message-value {
+  max-height: 280px;
+  overflow: auto;
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 12px 40px 12px 12px;
+  border-radius: 6px;
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.message-value-json {
+  color: #a5f3fc;
+}
+
+.code-block {
+  position: relative;
+}
+
+.code-block-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.18);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.code-block-copy:hover {
+  color: #fff;
+  background: rgba(148, 163, 184, 0.35);
+}
+
+.detail-field {
+  margin-bottom: 16px;
+}
+
+.detail-field > .ant-typography {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.value-tabs .ant-tabs-nav {
+  margin-bottom: 8px;
+}
+
+.message-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 6px;
+  border: 1px solid #f0f0f0;
+}
+
+.conn-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.conn-status-dot.on {
+  background: #52c41a;
+}
+
+.conn-status-dot.off {
+  background: #bfbfbf;
+}
+
+.table-cell-secondary {
+  color: rgba(0, 0, 0, 0.45);
+  font-size: 12px;
+}
+
+.protocol-tag {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+}
