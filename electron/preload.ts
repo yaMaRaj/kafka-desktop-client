@@ -1,3 +1,8 @@
+/**
+ * Preload：在隔离环境下向渲染进程暴露 window.kafkaApi。
+ * 新增 IPC 时必须同步更新本文件与 src/vite-env.d.ts。
+ * 事件类 API（onTailMessage 等）返回取消订阅函数，页面卸载时务必调用。
+ */
 import { contextBridge, ipcRenderer, IpcRendererEvent } from 'electron'
 import type {
   ConnectionProfile,
@@ -18,10 +23,11 @@ import type {
   SearchProgress,
 } from '../shared/types'
 
+/** 渲染进程唯一入口：所有 Kafka / 本地存储操作经此转发到主进程 */
 const api = {
   getVersion: (): Promise<string> => ipcRenderer.invoke('app:getVersion'),
 
-  // connections
+  // ---------- 连接管理 ----------
   listConnections: (): Promise<IpcResult<ConnectionProfile[]>> =>
     ipcRenderer.invoke('connections:list'),
   saveConnection: (profile: ConnectionProfile): Promise<IpcResult<ConnectionProfile>> =>
@@ -35,7 +41,7 @@ const api = {
   disconnect: (id: string): Promise<IpcResult<boolean>> =>
     ipcRenderer.invoke('connections:disconnect', id),
 
-  // admin / topics
+  // ---------- 集群 / Topic 管理 ----------
   getClusterOverview: (connectionId: string): Promise<IpcResult<ClusterOverview>> =>
     ipcRenderer.invoke('admin:overview', connectionId),
   listTopics: (connectionId: string): Promise<IpcResult<TopicInfo[]>> =>
@@ -61,7 +67,7 @@ const api = {
   getTopicOffsets: (connectionId: string, topic: string): Promise<IpcResult<TopicOffsets>> =>
     ipcRenderer.invoke('admin:topicOffsets', connectionId, topic),
 
-  // messages
+  // ---------- 消息读写 ----------
   fetchMessages: (
     connectionId: string,
     params: FetchMessagesParams,
@@ -73,7 +79,7 @@ const api = {
   ): Promise<IpcResult<{ topic: string; partition: number; offset: string }[]>> =>
     ipcRenderer.invoke('messages:produce', connectionId, params),
 
-  // consumer groups
+  // ---------- 消费组 ----------
   listConsumerGroups: (connectionId: string): Promise<IpcResult<string[]>> =>
     ipcRenderer.invoke('groups:list', connectionId),
   describeConsumerGroup: (
@@ -89,13 +95,13 @@ const api = {
   deleteConsumerGroup: (connectionId: string, groupId: string): Promise<IpcResult<boolean>> =>
     ipcRenderer.invoke('groups:delete', connectionId, groupId),
 
-  // schema registry
+  // ---------- Schema Registry ----------
   listSubjects: (connectionId: string): Promise<IpcResult<string[]>> =>
     ipcRenderer.invoke('schema:listSubjects', connectionId),
   getSubject: (connectionId: string, subject: string): Promise<IpcResult<SchemaSubjectInfo>> =>
     ipcRenderer.invoke('schema:getSubject', connectionId, subject),
 
-  // search & tail
+  // ---------- 搜索 / 实时 Tail（含事件订阅） ----------
   searchMessages: (
     connectionId: string,
     params: SearchMessagesParams,
@@ -128,12 +134,12 @@ const api = {
     return () => ipcRenderer.removeListener('search:progress', listener)
   },
 
-  // logs
+  // ---------- 操作日志 ----------
   listOperationLogs: (): Promise<IpcResult<OperationLogEntry[]>> =>
     ipcRenderer.invoke('logs:list'),
   clearOperationLogs: (): Promise<IpcResult<boolean>> => ipcRenderer.invoke('logs:clear'),
 
-  // export
+  // ---------- 导出文件（系统保存对话框） ----------
   saveTextFile: (payload: {
     defaultName: string
     content: string

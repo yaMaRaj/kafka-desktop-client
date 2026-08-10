@@ -1,3 +1,6 @@
+/**
+ * 消息导出为 JSONL：组装行数据并调用 kafkaApi.saveTextFile 弹出保存对话框。
+ */
 import type { KafkaMessageView } from '@shared/types'
 import dayjs from 'dayjs'
 

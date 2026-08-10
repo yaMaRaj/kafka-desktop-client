@@ -1,7 +1,12 @@
+/**
+ * IPC 与展示层辅助：统一成功/失败包装、Kafka 错误中文化、消息体展示转换。
+ */
+/** IPC 成功响应 */
 export function ok<T>(data: T) {
   return { ok: true as const, data }
 }
 
+/** IPC 失败响应（自动套用友好错误文案） */
 export function fail(error: unknown) {
   const message =
     error instanceof Error
@@ -12,6 +17,7 @@ export function fail(error: unknown) {
   return { ok: false as const, error: friendlyKafkaError(message) }
 }
 
+/** 将常见 Kafka/网络错误映射为中文提示，原文附在括号内便于排查 */
 export function friendlyKafkaError(message: string): string {
   const map: Array<[RegExp | string, string]> = [
     ['ECONNREFUSED', '无法连接 Broker，请检查地址与端口'],
@@ -38,6 +44,7 @@ export function friendlyKafkaError(message: string): string {
   return message
 }
 
+/** Buffer → 可读字符串；疑似 JSON 则 pretty-print，否则 UTF-8，失败则 Base64 */
 export function bufferToDisplay(value?: Buffer | null): string | null {
   if (value == null) return null
   try {

@@ -1,3 +1,7 @@
+/**
+ * 消费组：列表、详情（成员 + lag）、重置偏移、删除组。
+ * 重置偏移要求组无活跃成员（Empty）；Stable 时 KafkaJS 会拒绝。
+ */
 import { v4 as uuid } from 'uuid'
 import type {
   ConsumerGroupInfo,
@@ -95,13 +99,17 @@ export async function describeConsumerGroup(
   }
 }
 
+/**
+ * 重置组在某 Topic 上的提交偏移。
+ * strategy: earliest | latest | offset | timestamp
+ */
 export async function resetOffsets(
   connectionId: string,
   params: ResetOffsetsParams,
 ): Promise<boolean> {
   const { admin } = await getOrCreateClient(connectionId)
 
-  // Warn path: check active members
+  // 有活跃成员时提前失败，避免落到 KafkaJS 英文错误
   const described = await admin.describeGroups([params.groupId])
   const state = described.groups[0]?.state
   if (state === 'Stable' || state === 'PreparingRebalance' || state === 'CompletingRebalance') {

@@ -1,3 +1,4 @@
+/** 集群概览：ClusterId、Controller、Broker 列表 */
 import { useEffect, useState } from 'react'
 import { Button, Descriptions, Table, Tag, Empty, message } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'

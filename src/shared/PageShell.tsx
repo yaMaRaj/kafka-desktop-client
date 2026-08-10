@@ -1,6 +1,9 @@
+/**
+ * 页面通用壳：标题区、工具栏、主体、可选吸底 footer。
+ * 表格页建议 bodyScroll=false，配合 useTableScrollY 计算 scroll.y。
+ */
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 
-/** Shared page shell: header + optional toolbar + body + optional sticky footer */
 export function PageShell({
   title,
   subtitle,

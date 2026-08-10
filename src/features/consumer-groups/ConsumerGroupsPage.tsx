@@ -1,3 +1,4 @@
+/** 消费组：成员与 lag、重置偏移（需组为空）、删除组 */
 import { useEffect, useState } from 'react'
 import {
   Button,

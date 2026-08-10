@@ -1,3 +1,4 @@
+/** 消息浏览：按分区/offset/时间拉取，详情抽屉与导出 JSONL */
 import { useEffect, useMemo, useState, type Key } from 'react'
 import {
   Button,

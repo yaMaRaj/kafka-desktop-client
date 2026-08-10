@@ -1,3 +1,4 @@
+/** IPC：本地操作日志列表与清空 */
 import { ipcMain } from 'electron'
 import { listOperationLogs, clearOperationLogs } from '../store/configStore'
 import { ok, fail } from '../services/utils'

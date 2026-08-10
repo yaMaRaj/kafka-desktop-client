@@ -1,3 +1,7 @@
+/**
+ * Vite：同时构建渲染进程与 Electron main/preload。
+ * 别名 @ → src，@shared → shared；原生 Node 依赖对 main 标记 external。
+ */
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import electron from 'vite-plugin-electron/simple'

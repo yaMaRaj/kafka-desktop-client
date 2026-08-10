@@ -1,5 +1,11 @@
-/** Shared types between Electron main and renderer */
+/**
+ * 主进程与渲染进程共享的类型契约（IPC 参数 / 返回值 / 领域模型）。
+ * 新增字段时两边同时受益；保持向后兼容，避免 silent break。
+ *
+ * IpcResult<T> 为所有 invoke 通道的统一响应形状。
+ */
 
+/** 连接安全协议（当前不包含云厂商 IAM） */
 export type SecurityProtocol = 'PLAINTEXT' | 'SASL_PLAINTEXT' | 'SASL_SSL' | 'SSL'
 
 export type SaslMechanism = 'plain' | 'scram-sha-256' | 'scram-sha-512'
@@ -24,9 +30,11 @@ export interface SchemaRegistryConfig {
   password?: string
 }
 
+/** 本地保存的集群连接配置（密码字段存盘时已加密） */
 export interface ConnectionProfile {
   id: string
   name: string
+  /** 逗号分隔，支持域名，如 host1:9092,host2:9092 */
   bootstrapServers: string
   securityProtocol: SecurityProtocol
   clientId?: string
@@ -86,6 +94,7 @@ export interface KafkaHeader {
   value: string
 }
 
+/** 渲染层消息行 / 详情抽屉使用的统一消息视图 */
 export interface KafkaMessageView {
   topic: string
   partition: number
@@ -204,6 +213,7 @@ export interface OperationLogEntry {
   error?: string
 }
 
+/** IPC invoke 统一结果：成功带 data，失败带可读 error */
 export type IpcResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string }

@@ -1,3 +1,7 @@
+/**
+ * 集群与 Topic 运维：概览、列表/详情、创建删除、改配置、扩分区、水位 offsets。
+ * 写操作会写入本地操作日志。
+ */
 import { v4 as uuid } from 'uuid'
 import type { ClusterOverview, TopicInfo, TopicCreateParams, TopicOffsets } from '../../shared/types'
 import { getOrCreateClient, createTransientClient } from './kafkaClient'

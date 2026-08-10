@@ -1,3 +1,9 @@
+/**
+ * 消息浏览与生产。
+ * - fetch：临时 Consumer，按分区 / offset / 时间戳拉取，可选 Schema 解码
+ * - produce：支持 Headers、指定分区、Schema 编码
+ * - toMessageView：统一为前端展示结构 KafkaMessageView
+ */
 import { CompressionTypes, type EachMessagePayload } from 'kafkajs'
 import type {
   FetchMessagesParams,
@@ -27,6 +33,7 @@ function headersToView(
   return result
 }
 
+/** 将 KafkaJS 原始消息转为 UI 可用的 KafkaMessageView */
 export async function toMessageView(
   connectionId: string,
   topic: string,
@@ -67,6 +74,7 @@ export async function toMessageView(
   }
 }
 
+/** 按条件拉取消息；limit 默认 50，上限 10000 */
 export async function fetchMessages(
   connectionId: string,
   params: FetchMessagesParams,

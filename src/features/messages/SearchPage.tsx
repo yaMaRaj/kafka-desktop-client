@@ -1,3 +1,4 @@
+/** 消息搜索：关键字/正则限窗扫描，进度展示与导出 */
 import { useEffect, useMemo, useState, type Key } from 'react'
 import {
   Button,

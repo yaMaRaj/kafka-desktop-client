@@ -1,3 +1,4 @@
+/** 实时 Tail：订阅 push 消息、过滤/暂停；卸载时 stopTail */
 import { useEffect, useRef, useState } from 'react'
 import {
   Button,

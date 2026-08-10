@@ -1,3 +1,4 @@
+/** 连接管理：多集群配置 CRUD、测试连接（PLAINTEXT / SASL / SSL） */
 import { useEffect, useState } from 'react'
 import {
   Button,

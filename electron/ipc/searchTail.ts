@@ -1,3 +1,7 @@
+/**
+ * IPC：消息搜索与实时 Tail。
+ * 搜索进度 / Tail 消息通过 webContents.send 推送，需传入 getMainWindow。
+ */
 import { BrowserWindow, ipcMain } from 'electron'
 import { v4 as uuid } from 'uuid'
 import type { SearchMessagesParams, TailParams } from '../../shared/types'

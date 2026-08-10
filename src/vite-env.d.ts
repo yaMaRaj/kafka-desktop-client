@@ -1,3 +1,7 @@
+/**
+ * 渲染进程对 window.kafkaApi 的 TypeScript 声明。
+ * 与 electron/preload.ts 必须保持同步。
+ */
 import type {
   ConnectionProfile,
   TopicCreateParams,

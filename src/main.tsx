@@ -1,3 +1,6 @@
+/**
+ * 渲染进程入口：Ant Design 中文 locale + 全局主题，挂载 App 路由壳。
+ */
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { ConfigProvider, App as AntApp } from 'antd'

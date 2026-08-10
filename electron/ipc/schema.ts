@@ -1,3 +1,4 @@
+/** IPC：Schema Registry Subject 列表与详情 */
 import { ipcMain } from 'electron'
 import { fetchSubjects, getSubjectInfo } from '../services/schemaService'
 import { ok, fail } from '../services/utils'

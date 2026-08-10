@@ -1,3 +1,11 @@
+/**
+ * Electron 主进程入口。
+ * - 创建主窗口（preload + contextIsolation）
+ * - 注册全部 IPC handlers
+ * - 退出时断开 Kafka 客户端连接
+ *
+ * 开发期由 Vite 注入 VITE_DEV_SERVER_URL；生产加载 dist/index.html。
+ */
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import path from 'path'
 import { registerConnectionHandlers } from './ipc/connections'
@@ -19,6 +27,7 @@ let mainWindow: BrowserWindow | null = null
 
 const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
 
+/** 创建应用主窗口；外链用系统浏览器打开 */
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1400,
@@ -51,6 +60,7 @@ function createWindow() {
   }
 }
 
+/** 集中注册 IPC，便于新增域时在此挂载 */
 function registerAllHandlers() {
   registerConnectionHandlers()
   registerAdminHandlers()
@@ -64,6 +74,7 @@ function registerAllHandlers() {
   ipcMain.handle('app:getVersion', () => app.getVersion())
 }
 
+/** 供需要向渲染进程推送事件的 handler（如 Tail / 搜索进度）获取窗口 */
 function getMainWindow() {
   return mainWindow
 }

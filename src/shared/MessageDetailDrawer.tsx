@@ -1,3 +1,7 @@
+/**
+ * 消息详情抽屉：Key/Headers 原文；Value 支持 Raw / JSON 视图；代码块可复制。
+ * 浏览、搜索、Tail 等页面复用。
+ */
 import { useMemo, useState, useEffect } from 'react'
 import { Button, Drawer, Tabs, Tooltip, Typography, message } from 'antd'
 import { CheckOutlined, CopyOutlined } from '@ant-design/icons'

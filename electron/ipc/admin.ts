@@ -1,3 +1,4 @@
+/** IPC：集群概览与 Topic 管理（转发 adminService） */
 import { ipcMain } from 'electron'
 import type { TopicCreateParams } from '../../shared/types'
 import {

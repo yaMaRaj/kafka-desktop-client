@@ -1,3 +1,4 @@
+/** IPC：弹出系统保存对话框并写入文本文件（消息导出 JSONL 等） */
 import { dialog, ipcMain, BrowserWindow } from 'electron'
 import fs from 'fs/promises'
 import { ok, fail } from '../services/utils'

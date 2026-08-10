@@ -1,3 +1,7 @@
+/**
+ * 全局连接态（Zustand）：连接列表、当前 connectionId、集群概览、loading。
+ * 页面业务数据（Topic 列表、消息等）放在各页面本地 state，避免全局膨胀。
+ */
 import { create } from 'zustand'
 import type { ConnectionProfile, ClusterOverview } from '@shared/types'
 

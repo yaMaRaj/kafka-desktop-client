@@ -1,3 +1,7 @@
+/**
+ * 应用壳：侧栏导航、顶栏连接选择、Hash 路由。
+ * 除「连接管理」外，其余页面要求已连接集群。
+ */
 import { useEffect, useMemo, useState } from 'react'
 import { Layout, Menu, Select, Button, Typography, Space, Tag, Spin, message } from 'antd'
 import {

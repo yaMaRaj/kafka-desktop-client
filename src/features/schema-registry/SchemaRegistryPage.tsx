@@ -1,3 +1,4 @@
+/** Schema Registry：Subject 列表与最新 schema 查看 */
 import { useEffect, useState } from 'react'
 import { Button, Table, Typography, message, Drawer, Empty } from 'antd'
 import { ReloadOutlined } from '@ant-design/icons'

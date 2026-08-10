@@ -1,3 +1,4 @@
+/** IPC：消费组列表、详情、重置偏移、删除 */
 import { ipcMain } from 'electron'
 import type { ResetOffsetsParams } from '../../shared/types'
 import {

@@ -1,3 +1,4 @@
+/** 消息生产：Key/Value/Headers、分区、可选 Schema 编码；底部吸底发送 */
 import { useEffect, useState } from 'react'
 import {
   Button,

@@ -1,3 +1,7 @@
+/**
+ * 消息搜索（限窗扫描、可取消）与实时 Tail（独立临时 Consumer）。
+ * 进度/消息通过回调由 IPC 层推送到渲染进程。
+ */
 import { v4 as uuid } from 'uuid'
 import type { Consumer, EachMessagePayload } from 'kafkajs'
 import type {
@@ -16,6 +20,7 @@ type ErrorEmitter = (tailId: string, error: string) => void
 const activeSearches = new Map<string, { cancelled: boolean }>()
 const activeTails = new Map<string, { consumer: Consumer; stopped: boolean }>()
 
+/** 关键字或正则匹配 Key/Value */
 function matchesQuery(
   message: KafkaMessageView,
   query: string,

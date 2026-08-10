@@ -1,7 +1,12 @@
+/**
+ * Confluent Schema Registry 封装：按连接缓存客户端、列 Subject、编解码。
+ * 连接配置变更后应 clearSchemaRegistry(connectionId)。
+ */
 import { SchemaRegistry } from '@kafkajs/confluent-schema-registry'
 import type { ConnectionProfile, SchemaSubjectInfo } from '../../shared/types'
 import { getConnection, unlockProfile } from '../store/configStore'
 
+/** connectionId → SchemaRegistry 实例 */
 const registries = new Map<string, SchemaRegistry>()
 
 function resolveProfile(connectionId: string): ConnectionProfile {

@@ -1,3 +1,8 @@
+/**
+ * 本地持久化：连接配置与操作日志（electron-store）。
+ * 密钥字段存盘前加密（safeStorage → enc:；不可用则 plain: Base64）。
+ * 使用连接前务必 unlockProfile；切勿把明文密码写入日志。
+ */
 import Store from 'electron-store'
 import { safeStorage } from 'electron'
 import type { ConnectionProfile, OperationLogEntry } from '../../shared/types'
@@ -59,6 +64,7 @@ function maskProfileForStorage(profile: ConnectionProfile): ConnectionProfile {
   return cloned
 }
 
+/** 解密配置中的密码字段，供建连使用（返回深拷贝） */
 export function unlockProfile(profile: ConnectionProfile): ConnectionProfile {
   const cloned: ConnectionProfile = JSON.parse(JSON.stringify(profile))
   if (cloned.sasl?.password) {
@@ -97,6 +103,7 @@ export function deleteConnection(id: string): boolean {
   return true
 }
 
+/** 追加操作日志，仅保留最近 500 条 */
 export function appendOperationLog(entry: OperationLogEntry) {
   const logs = store.get('operationLogs')
   logs.unshift(entry)

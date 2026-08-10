@@ -1,3 +1,4 @@
+/** IPC：消息拉取与生产 */
 import { ipcMain } from 'electron'
 import type { FetchMessagesParams, ProduceMessageParams } from '../../shared/types'
 import { fetchMessages, produceMessages } from '../services/messageService'

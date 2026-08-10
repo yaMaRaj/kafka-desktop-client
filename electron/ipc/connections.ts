@@ -1,3 +1,7 @@
+/**
+ * IPC：连接配置 CRUD、测试连接、建立/断开会话。
+ * 保存连接后会断开旧客户端并清理 Schema Registry 缓存，确保新配置生效。
+ */
 import { ipcMain } from 'electron'
 import { v4 as uuid } from 'uuid'
 import type { ConnectionProfile } from '../../shared/types'

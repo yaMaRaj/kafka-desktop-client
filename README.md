@@ -2,6 +2,8 @@
 
 跨 Windows / macOS 的 Kafka 桌面客户端：连接集群、浏览/生产消息、管理 Topic 与消费组偏移，支持 Schema Registry、消息搜索与实时 Tail。
 
+> **维护与迭代**：目录结构、架构、IPC 约定与扩展指南见 [docs/PROJECT.md](docs/PROJECT.md)。
+
 ## 功能
 
 - 多集群连接：PLAINTEXT / SASL_PLAINTEXT / SASL_SSL / SSL（证书路径配置）

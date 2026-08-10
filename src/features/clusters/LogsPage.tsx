@@ -1,3 +1,4 @@
+/** 本地操作日志：查看与清空（electron-store） */
 import { useEffect, useState } from 'react'
 import { Button, Space, Table, Tag, Empty, message, Popconfirm } from 'antd'
 import { ReloadOutlined, ClearOutlined } from '@ant-design/icons'

@@ -1,3 +1,9 @@
+/**
+ * Kafka 客户端生命周期管理。
+ * - 按 connectionId 缓存 Admin + Producer，避免重复建连
+ * - Consumer 不在此池化（拉取/搜索/Tail 各自创建临时 Consumer）
+ * - 读写配置前通过 unlockProfile 解密密钥
+ */
 import fs from 'fs'
 import { Kafka, logLevel, type Admin, type Producer, type KafkaConfig, type SASLOptions } from 'kafkajs'
 import type { ConnectionProfile } from '../../shared/types'
@@ -10,6 +16,7 @@ interface ClientBundle {
   profile: ConnectionProfile
 }
 
+/** connectionId → 已连接的 Admin/Producer */
 const clients = new Map<string, ClientBundle>()
 
 function readFileIfExists(filePath?: string): Buffer | undefined {
@@ -20,6 +27,7 @@ function readFileIfExists(filePath?: string): Buffer | undefined {
   return fs.readFileSync(filePath)
 }
 
+/** 将连接配置转为 KafkaJS KafkaConfig（含 SSL 文件与 SASL） */
 export function buildKafkaConfig(profile: ConnectionProfile): KafkaConfig {
   const unlocked = unlockProfile(profile)
   const brokers = unlocked.bootstrapServers
@@ -66,6 +74,7 @@ export function buildKafkaConfig(profile: ConnectionProfile): KafkaConfig {
   return config
 }
 
+/** 获取或创建持久客户端；连接配置变更后应先 disconnect 再取 */
 export async function getOrCreateClient(connectionId: string): Promise<ClientBundle> {
   const existing = clients.get(connectionId)
   if (existing) return existing
@@ -86,6 +95,7 @@ export async function getOrCreateClient(connectionId: string): Promise<ClientBun
   return bundle
 }
 
+/** 一次性客户端（如测试连接），调用方负责 disconnect */
 export async function createTransientClient(profile: ConnectionProfile): Promise<ClientBundle> {
   const unlocked = unlockProfile(profile)
   const kafka = new Kafka(buildKafkaConfig(unlocked))
