@@ -1,0 +1,15 @@
+# Build artifacts
+build/bin/
+*.exe
+*.exe~
+
+# Frontend
+node_modules/
+frontend/dist/
+frontend/package.json.md5
+
+# IDE / local
+.vscode/
+.idea/
+*.log
+.DS_Store
