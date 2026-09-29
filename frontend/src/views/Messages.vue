@@ -36,7 +36,7 @@
         <span class="label">条数</span>
         <el-input-number v-model="limit" :min="1" :max="5000" style="width: 110px" />
       </div>
-      <el-button type="primary" :loading="loading" @click="fetch">拉取</el-button>
+      <el-button class="btn-stable" type="primary" :loading="loading" @click="fetch">拉取</el-button>
     </div>
     <el-table :data="rows" stripe border height="calc(100vh - 240px)" @row-click="showDetail">
       <el-table-column prop="partition" label="P" width="60" />
@@ -130,5 +130,6 @@ onMounted(loadTopics)
 <style scoped>
 .field { display: flex; align-items: center; gap: 6px; }
 .label { color: #606266; font-size: 13px; white-space: nowrap; }
+.btn-stable { min-width: 80px; }
 .detail { white-space: pre-wrap; word-break: break-all; font-size: 12px; }
 </style>

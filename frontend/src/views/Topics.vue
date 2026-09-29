@@ -14,7 +14,7 @@
         <el-checkbox v-model="hideInternal">隐藏内部</el-checkbox>
         <el-input v-model="q" placeholder="过滤名称" clearable style="width: 180px" />
         <el-button type="primary" @click="showCreate = true">创建</el-button>
-        <el-button @click="load" :loading="loading">刷新</el-button>
+        <el-button class="btn-stable" @click="load" :loading="loading">刷新</el-button>
       </div>
     </div>
     <el-table
@@ -339,7 +339,16 @@ onMounted(load)
 </script>
 
 <style scoped>
-.header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+.btn-stable {
+  min-width: 80px;
+}
 .sub-alert { color: #f56c6c; font-weight: 600; }
 .expand { padding: 8px 16px 12px 48px; }
 .expand-meta {
