@@ -33,7 +33,7 @@
     <div v-if="logs.length" class="bulk-log">
       <div class="bulk-log-header">
         <span>造数日志</span>
-        <span class="bulk-log-sub">每 1000 条刷新一次</span>
+        <!-- <span class="bulk-log-sub">每 1000 条刷新一次</span> -->
       </div>
       <el-progress
         :percentage="percent"

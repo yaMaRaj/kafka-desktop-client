@@ -37,7 +37,8 @@
         </div>
       </el-header>
       <el-main class="app-main" v-loading="loading">
-        <router-view />
+        <!-- 仅在连接成功后变更 key，确保页面按新集群重新拉数 -->
+        <router-view :key="viewKey || 'disconnected'" />
       </el-main>
     </el-container>
   </el-container>
@@ -70,6 +71,8 @@ const activeId = ref('')
 const connected = ref(false)
 const overview = ref(null)
 const loading = ref(false)
+// 页面数据会话：仅连接成功后更新，驱动 router-view 重建
+const viewKey = ref('')
 const activeMenu = computed(() => route.path)
 
 // 未连接时拦截需集群的页面，避免一进页就一堆报错
@@ -89,12 +92,16 @@ async function refreshConnections() {
 async function onConnect(id) {
   if (!id) return
   loading.value = true
+  // 切换过程中清掉旧数据，避免顶栏/页面仍显示上一集群
+  overview.value = null
+  viewKey.value = ''
   try {
     const res = await kafkaApi.connect(id)
     if (!res.ok) {
       ElMessage.error(res.error)
       connected.value = false
       overview.value = null
+      viewKey.value = ''
       // 清空选中，便于再次选择同一配置重试（el-select 同值不触发 change）
       activeId.value = ''
       return
@@ -102,6 +109,7 @@ async function onConnect(id) {
     activeId.value = id
     connected.value = true
     overview.value = res.data
+    viewKey.value = id
     ElMessage.success('已连接集群')
   } finally {
     loading.value = false
@@ -114,6 +122,7 @@ async function onDisconnect() {
   connected.value = false
   overview.value = null
   activeId.value = ''
+  viewKey.value = ''
   ElMessage.info('已断开')
   if (route.meta?.needConn) vueRouter.push('/connections')
 }
@@ -122,6 +131,7 @@ function clearConnectionState(id) {
   if (id && activeId.value && id !== activeId.value) return
   connected.value = false
   overview.value = null
+  viewKey.value = ''
   if (!id || activeId.value === id) activeId.value = ''
   if (route.meta?.needConn) vueRouter.push('/connections')
 }
@@ -142,6 +152,7 @@ kafkaApi.getActiveConnectionID().then((id) => {
   if (id) {
     activeId.value = id
     connected.value = true
+    viewKey.value = id
     kafkaApi.getOverview().then((res) => {
       if (res.ok) overview.value = res.data
     })
