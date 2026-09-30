@@ -5,7 +5,7 @@
         <div class="page-title">消费组</div>
         <div class="page-sub">查看成员与 lag</div>
       </div>
-      <el-button @click="load" :loading="loading">刷新</el-button>
+      <el-button class="btn-stable" @click="load" :loading="loading">刷新</el-button>
     </div>
     <el-row :gutter="12">
       <el-col :span="8">
@@ -79,3 +79,7 @@ async function remove(id) {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.btn-stable { min-width: 80px; }
+</style>
