@@ -158,12 +158,13 @@ type ProduceResult struct {
 
 // BulkProduceParams 批量造数 / 轻量压测（无需本机安装 Kafka）
 type BulkProduceParams struct {
-	Topic       string `json:"topic"`
-	NumRecords  int    `json:"numRecords"`
-	RecordSize  int    `json:"recordSize"`
-	Throughput  int    `json:"throughput"` // 每秒条数，0 或 -1 表示不限速
-	KeyPrefix   string `json:"keyPrefix,omitempty"`
-	ValuePrefix string `json:"valuePrefix,omitempty"`
+	Topic         string `json:"topic"`
+	NumRecords    int    `json:"numRecords"`
+	RecordSize    int    `json:"recordSize"`              // >0 时：无模板按固定字节填充；有模板则不足时用随机文本补齐
+	Throughput    int    `json:"throughput"`              // 每秒条数，0 或 -1 表示不限速
+	KeyPrefix     string `json:"keyPrefix,omitempty"`
+	ValuePrefix   string `json:"valuePrefix,omitempty"`   // 仅无模板时生效，写入固定 payload 前缀
+	ValueTemplate string `json:"valueTemplate,omitempty"` // JSON/文本模板，支持 {{seq}} {{uuid}} 等占位符
 }
 
 type BulkProduceResult struct {

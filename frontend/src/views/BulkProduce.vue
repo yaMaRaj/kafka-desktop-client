@@ -3,10 +3,10 @@
     <div class="page-header">
       <div>
         <div class="page-title">批量造数 / 轻量压测</div>
-        <div class="page-sub">Go 直连集群，无需本机安装 Kafka 发行版</div>
+        <div class="page-sub">按 JSON 模板生成消息体，Go 直连集群</div>
       </div>
     </div>
-    <el-form label-width="120px" style="max-width: 640px">
+    <el-form label-width="120px" class="bulk-form">
       <el-form-item label="Topic" required>
         <el-select v-model="form.topic" filterable style="width: 100%" @focus="loadTopics">
           <el-option v-for="t in topics" :key="t.name" :label="t.name" :value="t.name" />
@@ -16,14 +16,32 @@
         <el-input-number v-model="form.numRecords" :min="1" :max="5000000" />
       </el-form-item>
       <el-form-item label="单条大小(B)">
-        <el-input-number v-model="form.recordSize" :min="1" :max="1048576" />
+        <el-input-number v-model="form.recordSize" :min="0" :max="1048576" />
+        <span class="hint">0 = 不补齐；大于模板体积时用随机文本补齐</span>
       </el-form-item>
       <el-form-item label="吞吐(条/秒)">
         <el-input-number v-model="form.throughput" :min="0" />
-        <span style="margin-left: 8px; color: #909399">0 = 不限速</span>
+        <span class="hint">0 = 不限速</span>
       </el-form-item>
       <el-form-item label="Key 前缀">
-        <el-input v-model="form.keyPrefix" placeholder="可选" />
+        <el-input v-model="form.keyPrefix" placeholder="可选，生成 key-{序号}" />
+      </el-form-item>
+      <el-form-item label="消息模板">
+        <div class="tpl-wrap">
+          <div class="tpl-toolbar">
+            <span class="hint" v-pre>
+              支持 {{cname}} {{text}} {{text:64}} {{integer:1:100}} 等；体积不足时按单条大小补齐
+            </span>
+            <el-button link type="primary" @click="resetTemplate">恢复默认</el-button>
+          </div>
+          <el-input
+            v-model="form.valueTemplate"
+            type="textarea"
+            :rows="14"
+            class="tpl-editor"
+            placeholder="消息 JSON 模板"
+          />
+        </div>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" :loading="loading" @click="run">开始</el-button>
@@ -66,14 +84,32 @@ import { kafkaApi } from '../api/kafka'
 import { EventsOff, EventsOn } from '../../wailsjs/runtime/runtime'
 import { useRoute } from 'vue-router'
 
+const DEFAULT_VALUE_TEMPLATE = `{
+  "id": "{{uuid}}",
+  "seq": {{seq}},
+  "name": "{{cname}}",
+  "age": {{age}},
+  "email": "{{email}}",
+  "mobile": "{{mobile}}",
+  "city": "{{ccity}}",
+  "address": "{{caddress}}",
+  "company": "{{company}}",
+  "level": "{{pick:普通|银卡|金卡}}",
+  "score": {{integer:1:100}},
+  "vip": {{bool}},
+  "remark": "{{text:64}}",
+  "createdAt": "{{now}}"
+}`
+
 const route = useRoute()
 const topics = ref([])
 const form = ref({
   topic: '',
   numRecords: 1000,
-  recordSize: 100,
+  recordSize: 0,
   throughput: 0,
   keyPrefix: 'bulk',
+  valueTemplate: DEFAULT_VALUE_TEMPLATE,
 })
 const loading = ref(false)
 const result = ref(null)
@@ -127,6 +163,11 @@ function onProgress(prog) {
   appendLog(prog)
 }
 
+function resetTemplate() {
+  form.value.valueTemplate = DEFAULT_VALUE_TEMPLATE
+  ElMessage.success('已恢复默认模板')
+}
+
 async function loadTopics() {
   const res = await kafkaApi.listTopics()
   if (res.ok) topics.value = (res.data || []).filter((t) => !t.isInternal)
@@ -142,12 +183,23 @@ watch(() => route.query.topic, applyQueryTopic)
 
 async function run() {
   if (!form.value.topic) return ElMessage.warning('请选择 Topic')
+  if (!String(form.value.valueTemplate || '').trim()) {
+    return ElMessage.warning('请填写消息模板')
+  }
   loading.value = true
   result.value = null
   logs.value = []
   latest.value = { processed: 0, total: form.value.numRecords, phase: 'start', failed: 0, sent: 0 }
   try {
-    const res = await kafkaApi.bulkProduce(form.value)
+    const payload = {
+      topic: form.value.topic,
+      numRecords: form.value.numRecords,
+      recordSize: form.value.recordSize,
+      throughput: form.value.throughput,
+      keyPrefix: form.value.keyPrefix,
+      valueTemplate: form.value.valueTemplate,
+    }
+    const res = await kafkaApi.bulkProduce(payload)
     if (!res.ok) {
       appendLog({
         phase: 'done',
@@ -183,6 +235,22 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.bulk-form { max-width: 720px; }
+.hint { margin-left: 8px; color: #909399; font-size: 12px; }
+.tpl-wrap { width: 100%; }
+.tpl-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.tpl-toolbar .hint { margin-left: 0; }
+.tpl-editor :deep(textarea) {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
 .bulk-log {
   max-width: 720px;
   margin-top: 8px;

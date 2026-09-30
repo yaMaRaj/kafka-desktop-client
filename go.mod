@@ -3,6 +3,7 @@ module kafka-client-go
 go 1.25.0
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.28.0
 	github.com/google/uuid v1.6.0
 	github.com/twmb/franz-go v1.21.5
 	github.com/twmb/franz-go/pkg/kadm v1.18.0

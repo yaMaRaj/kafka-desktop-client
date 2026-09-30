@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"kafka-client-go/internal/hostssh"
@@ -497,7 +498,15 @@ func connDetail(p model.ConnectionProfile) string {
 
 // bulkDetail 批量造数日志详情：对象与参数
 func bulkDetail(p model.BulkProduceParams) string {
-	detail := fmt.Sprintf("%s × %d 条（%dB/条", p.Topic, p.NumRecords, p.RecordSize)
+	mode := fmt.Sprintf("%dB/条", p.RecordSize)
+	if strings.TrimSpace(p.ValueTemplate) != "" {
+		if p.RecordSize > 0 {
+			mode = fmt.Sprintf("JSON模板，补齐至 %dB", p.RecordSize)
+		} else {
+			mode = "JSON模板"
+		}
+	}
+	detail := fmt.Sprintf("%s × %d 条（%s", p.Topic, p.NumRecords, mode)
 	if p.Throughput > 0 {
 		detail += fmt.Sprintf("，限速 %d 条/秒", p.Throughput)
 	}

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/twmb/franz-go/pkg/kgo"
@@ -12,6 +13,8 @@ import (
 
 // BulkProgressEvery 每处理这么多条推一次进度日志（首尾另报）
 const BulkProgressEvery = 1000
+
+const maxBulkValueBytes = 1024 * 1024
 
 // BulkProduce 批量造数 / 轻量压测（Go 直连集群，无需本机安装 Kafka 发行版）
 func BulkProduce(ctx context.Context, c *Client, p model.BulkProduceParams, onProgress func(model.BulkProduceProgress)) (*model.BulkProduceResult, error) {
@@ -24,20 +27,38 @@ func BulkProduce(ctx context.Context, c *Client, p model.BulkProduceParams, onPr
 	if p.NumRecords > 5_000_000 {
 		return nil, fmt.Errorf("单次最多 500 万条，请分批执行")
 	}
-	if p.RecordSize <= 0 {
-		p.RecordSize = 100
+
+	tpl := strings.TrimSpace(p.ValueTemplate)
+	useTemplate := tpl != ""
+	if useTemplate {
+		if len(tpl) > maxBulkValueBytes {
+			return nil, fmt.Errorf("消息模板不能超过 1MB")
+		}
 	}
-	if p.RecordSize > 1024*1024 {
+	if p.RecordSize < 0 {
+		return nil, fmt.Errorf("单条大小不能为负数")
+	}
+	if p.RecordSize > maxBulkValueBytes {
 		return nil, fmt.Errorf("单条大小不能超过 1MB")
 	}
+	// 无模板且未指定大小时，退回旧行为：固定字节填充
+	if !useTemplate {
+		if p.RecordSize <= 0 {
+			p.RecordSize = 100
+		}
+	}
 
-	payload := bytes.Repeat([]byte("x"), p.RecordSize)
-	if p.ValuePrefix != "" {
-		prefix := []byte(p.ValuePrefix)
-		if len(prefix) >= p.RecordSize {
-			payload = prefix[:p.RecordSize]
-		} else {
-			copy(payload, prefix)
+	// 无模板时：预先生成固定 payload（兼容旧行为）
+	var fixedPayload []byte
+	if !useTemplate {
+		fixedPayload = bytes.Repeat([]byte("x"), p.RecordSize)
+		if p.ValuePrefix != "" {
+			prefix := []byte(p.ValuePrefix)
+			if len(prefix) >= p.RecordSize {
+				fixedPayload = prefix[:p.RecordSize]
+			} else {
+				copy(fixedPayload, prefix)
+			}
 		}
 	}
 
@@ -81,6 +102,19 @@ func BulkProduce(ctx context.Context, c *Client, p model.BulkProduceParams, onPr
 			report("done")
 			return summarize(sent, failed, start, totalLatency), ctx.Err()
 		default:
+		}
+
+		var payload []byte
+		if useTemplate {
+			payload = renderBulkValue(tpl, i)
+			if p.RecordSize > 0 {
+				payload = padBulkValueToSize(payload, p.RecordSize)
+			}
+			if len(payload) > maxBulkValueBytes {
+				return nil, fmt.Errorf("渲染后的消息超过 1MB（第 %d 条）", i)
+			}
+		} else {
+			payload = fixedPayload
 		}
 
 		rec := &kgo.Record{Topic: p.Topic, Value: payload}

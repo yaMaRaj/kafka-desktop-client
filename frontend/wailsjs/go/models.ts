@@ -7,6 +7,7 @@ export namespace model {
 	    throughput: number;
 	    keyPrefix?: string;
 	    valuePrefix?: string;
+	    valueTemplate?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new BulkProduceParams(source);
@@ -20,6 +21,7 @@ export namespace model {
 	        this.throughput = source["throughput"];
 	        this.keyPrefix = source["keyPrefix"];
 	        this.valuePrefix = source["valuePrefix"];
+	        this.valueTemplate = source["valueTemplate"];
 	    }
 	}
 	export class HostAdminConfig {
