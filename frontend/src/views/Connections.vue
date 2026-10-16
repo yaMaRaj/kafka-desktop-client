@@ -11,12 +11,13 @@
       <el-table-column prop="name" label="名称" min-width="140" />
       <el-table-column prop="bootstrapServers" label="Bootstrap" min-width="220" />
       <el-table-column prop="securityProtocol" label="协议" width="140" />
-      <el-table-column label="操作" width="340" fixed="right">
+      <el-table-column label="操作" width="390" fixed="right">
         <template #default="{ row }">
           <el-button link type="primary" @click="test(row)">测试</el-button>
           <el-button link type="success" @click="connect(row)">连接</el-button>
           <el-button link type="warning" @click="openOps(row)">运维</el-button>
           <el-button link @click="openEdit(row)">编辑</el-button>
+          <el-button link @click="copyConn(row)">复制</el-button>
           <el-popconfirm title="确认删除？" @confirm="remove(row.id)">
             <template #reference>
               <el-button link type="danger">删除</el-button>
@@ -109,8 +110,13 @@
         </el-collapse>
       </el-form>
       <template #footer>
-        <el-button @click="visible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+        <div class="dialog-footer">
+          <el-button :loading="testing" @click="testForm">测试连接</el-button>
+          <div class="dialog-footer-right">
+            <el-button @click="visible = false">取消</el-button>
+            <el-button type="primary" :loading="saving" @click="save">保存</el-button>
+          </div>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -127,6 +133,7 @@ const appState = inject('appState')
 const list = ref([])
 const visible = ref(false)
 const saving = ref(false)
+const testing = ref(false)
 const sshOpen = ref([]) // 默认折叠
 const form = ref(emptyForm())
 
@@ -178,16 +185,39 @@ function openEdit(row) {
   visible.value = true
 }
 
-async function save() {
+/** 复制连接配置：打开新建弹窗并预填，清除 id 后可另存 */
+function copyConn(row) {
+  const cloned = JSON.parse(JSON.stringify({
+    ...emptyForm(),
+    ...row,
+    sasl: row.sasl || emptyForm().sasl,
+    ssl: row.ssl || emptyForm().ssl,
+    hostAdmin: { ...emptyHostAdmin(), ...(row.hostAdmin || {}) },
+  }))
+  cloned.id = ''
+  cloned.name = `${row.name || '连接'} 副本`
+  form.value = cloned
+  sshOpen.value = []
+  visible.value = true
+}
+
+function buildPayload() {
   if (!form.value.name || !form.value.bootstrapServers) {
-    return ElMessage.warning('请填写名称与 Bootstrap')
+    ElMessage.warning('请填写名称与 Bootstrap')
+    return null
   }
+  const payload = { ...form.value }
+  if (!payload.securityProtocol.includes('SASL')) payload.sasl = null
+  if (!payload.securityProtocol.includes('SSL')) payload.ssl = null
+  if (!payload.hostAdmin?.username) payload.hostAdmin = null
+  return payload
+}
+
+async function save() {
+  const payload = buildPayload()
+  if (!payload) return
   saving.value = true
   try {
-    const payload = { ...form.value }
-    if (!payload.securityProtocol.includes('SASL')) payload.sasl = null
-    if (!payload.securityProtocol.includes('SSL')) payload.ssl = null
-    if (!payload.hostAdmin?.username) payload.hostAdmin = null
     const res = await kafkaApi.saveConnection(payload)
     if (!res.ok) return ElMessage.error(res.error)
     ElMessage.success('已保存')
@@ -195,6 +225,19 @@ async function save() {
     await load()
   } finally {
     saving.value = false
+  }
+}
+
+async function testForm() {
+  const payload = buildPayload()
+  if (!payload) return
+  testing.value = true
+  try {
+    const res = await kafkaApi.testConnection(payload)
+    if (!res.ok) return ElMessage.error(res.error)
+    ElMessage.success(`连通成功，Brokers=${res.data?.brokers?.length || 0}`)
+  } finally {
+    testing.value = false
   }
 }
 
@@ -224,6 +267,17 @@ onMounted(load)
 </script>
 
 <style scoped>
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.dialog-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .ssh-collapse {
   border: none;
   margin-top: 4px;
