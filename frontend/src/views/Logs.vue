@@ -84,6 +84,7 @@ const ACTION_META = {
   updatePartitions: { label: '扩分区', type: 'warning' },
   produceMessage: { label: '发送消息', type: 'success' },
   bulkProduce: { label: '批量造数', type: 'success' },
+  exportMessages: { label: '导出消息', type: 'success' },
   deleteGroup: { label: '删除消费组', type: 'danger' },
   testSSH: { label: '测试 SSH', type: 'info' },
   readBrokerConfig: { label: '读取配置', type: 'warning' },

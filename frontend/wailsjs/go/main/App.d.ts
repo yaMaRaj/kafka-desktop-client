@@ -20,6 +20,8 @@ export function DescribeConsumerGroup(arg1:string):Promise<model.Result>;
 
 export function Disconnect(arg1:string):Promise<model.Result>;
 
+export function ExportMessages(arg1:model.ExportMessagesParams):Promise<model.Result>;
+
 export function FetchMessages(arg1:model.FetchMessagesParams):Promise<model.Result>;
 
 export function GetActiveConnectionID():Promise<string>;

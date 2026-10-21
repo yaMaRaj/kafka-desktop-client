@@ -138,6 +138,38 @@ export namespace model {
 		    return a;
 		}
 	}
+	export class ExportMessagesParams {
+	    topic: string;
+	    partition?: number;
+	    fromOffset?: number;
+	    fromTimestamp?: number;
+	    toTimestamp?: number;
+	    keyContains?: string;
+	    valueContains?: string;
+	    valueRegex?: string;
+	    maxScan?: number;
+	    maxExport?: number;
+	    format: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ExportMessagesParams(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.topic = source["topic"];
+	        this.partition = source["partition"];
+	        this.fromOffset = source["fromOffset"];
+	        this.fromTimestamp = source["fromTimestamp"];
+	        this.toTimestamp = source["toTimestamp"];
+	        this.keyContains = source["keyContains"];
+	        this.valueContains = source["valueContains"];
+	        this.valueRegex = source["valueRegex"];
+	        this.maxScan = source["maxScan"];
+	        this.maxExport = source["maxExport"];
+	        this.format = source["format"];
+	    }
+	}
 	export class FetchMessagesParams {
 	    topic: string;
 	    partition?: number;

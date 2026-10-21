@@ -283,6 +283,67 @@ func (a *App) FetchMessages(p model.FetchMessagesParams) model.Result {
 	return model.OK(list)
 }
 
+func (a *App) ExportMessages(p model.ExportMessagesParams) model.Result {
+	c, err := a.client()
+	if err != nil {
+		return model.Fail(err)
+	}
+	format := strings.ToLower(strings.TrimSpace(p.Format))
+	if format == "" {
+		format = "jsonl"
+		p.Format = format
+	}
+	filters := []runtime.FileFilter{
+		{DisplayName: "JSON Lines (*.jsonl)", Pattern: "*.jsonl"},
+		{DisplayName: "CSV (*.csv)", Pattern: "*.csv"},
+	}
+	defName := fmt.Sprintf("%s-export.%s", sanitizeFilePart(p.Topic), format)
+	if format == "csv" {
+		filters[0], filters[1] = filters[1], filters[0]
+	}
+	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
+		Title:           "导出消息",
+		DefaultFilename: defName,
+		Filters:         filters,
+	})
+	if err != nil {
+		return model.Fail(err)
+	}
+	if path == "" {
+		return model.Fail(fmt.Errorf("已取消导出"))
+	}
+	// 按格式纠正扩展名
+	lower := strings.ToLower(path)
+	if format == "jsonl" && !strings.HasSuffix(lower, ".jsonl") && !strings.HasSuffix(lower, ".json") {
+		path += ".jsonl"
+	}
+	if format == "csv" && !strings.HasSuffix(lower, ".csv") {
+		path += ".csv"
+	}
+
+	r, err := kafka.ExportMessages(a.ctx, c, p, path, func(prog model.ExportMessagesProgress) {
+		runtime.EventsEmit(a.ctx, "export-messages-progress", prog)
+	})
+	detail := fmt.Sprintf("%s → %s", p.Topic, path)
+	if r != nil {
+		detail = fmt.Sprintf("%s 扫描%d/命中%d/导出%d", p.Topic, r.Scanned, r.Matched, r.Exported)
+	}
+	a.logOp(a.active, "", model.ActionExportMessages, detail, err)
+	if err != nil {
+		return model.Fail(err)
+	}
+	return model.OK(r)
+}
+
+func sanitizeFilePart(s string) string {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return "messages"
+	}
+	repl := strings.NewReplacer(`/`, `_`, `\`, `_`, `:`, `_`, `*`, `_`, `?`, `_`, `"`, `_`, `<`, `_`, `>`, `_`, `|`, `_`)
+	return repl.Replace(s)
+}
+
 func (a *App) ProduceMessage(p model.ProduceMessageParams) model.Result {
 	c, err := a.client()
 	if err != nil {

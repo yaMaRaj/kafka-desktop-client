@@ -34,6 +34,7 @@ export const kafkaApi = {
   deleteTopic: (topic) => call('DeleteTopic', topic),
   updatePartitions: (topic, total) => call('UpdatePartitions', topic, total),
   fetchMessages: (p) => call('FetchMessages', p),
+  exportMessages: (p) => call('ExportMessages', p),
   produceMessage: (p) => call('ProduceMessage', p),
   bulkProduce: (p) => call('BulkProduce', p),
   listConsumerGroups: () => call('ListConsumerGroups'),

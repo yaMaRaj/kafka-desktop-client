@@ -3,42 +3,98 @@
     <div class="page-header">
       <div>
         <div class="page-title">消息浏览</div>
-        <div class="page-sub">按 Topic / 分区 / Offset 拉取</div>
+        <div class="page-sub">预览拉取与条件扫描导出</div>
       </div>
     </div>
-    <div class="toolbar">
-      <el-select v-model="topic" filterable placeholder="选择 Topic" style="width: 260px" @focus="loadTopics">
-        <el-option v-for="t in topics" :key="t.name" :label="t.name" :value="t.name" />
-      </el-select>
-      <div class="field">
-        <span class="label">分区</span>
-        <el-select v-model="partition" :empty-values="[]" style="width: 110px">
-          <el-option label="全部分区" :value="null" />
-          <el-option v-for="p in partitionIds" :key="p" :label="p" :value="p" />
-        </el-select>
+
+    <div class="panel">
+      <div class="panel-head">
+        <span class="panel-title">拉取范围</span>
       </div>
-      <div class="field">
-        <span class="label">起点</span>
-        <el-select v-model="startMode" style="width: 120px">
-          <el-option label="从最早开始" value="earliest" />
-          <el-option label="从指定位置" value="custom" />
-        </el-select>
-        <el-input-number
-          v-if="startMode === 'custom'"
-          v-model="customOffset"
-          :min="0"
-          :precision="0"
-          placeholder="Offset"
-          style="width: 130px"
-        />
+      <div class="panel-grid">
+        <div class="field">
+          <span class="label">Topic</span>
+          <el-select v-model="topic" filterable placeholder="选择 Topic" class="ctl-topic" @focus="loadTopics">
+            <el-option v-for="t in topics" :key="t.name" :label="t.name" :value="t.name" />
+          </el-select>
+        </div>
+        <div class="field">
+          <span class="label">分区</span>
+          <el-select v-model="partition" :empty-values="[]" class="ctl-sm">
+            <el-option label="全部分区" :value="null" />
+            <el-option v-for="p in partitionIds" :key="p" :label="p" :value="p" />
+          </el-select>
+        </div>
+        <div class="field field-start">
+          <span class="label">起点</span>
+          <el-select v-model="startMode" class="ctl-sm">
+            <el-option label="从最早开始" value="earliest" />
+            <el-option label="从指定位置" value="custom" />
+            <el-option label="从时间开始" value="time" />
+          </el-select>
+          <el-input-number
+            v-if="startMode === 'custom'"
+            v-model="customOffset"
+            :min="0"
+            :precision="0"
+            placeholder="Offset"
+            class="ctl-sm"
+          />
+          <el-date-picker
+            v-if="startMode === 'time'"
+            v-model="fromTime"
+            type="datetime"
+            placeholder="起始时间"
+            value-format="x"
+            class="ctl-time"
+          />
+        </div>
       </div>
-      <div class="field">
-        <span class="label">条数</span>
-        <el-input-number v-model="limit" :min="1" :max="5000" style="width: 110px" />
+      <div class="panel-actions">
+        <div class="field">
+          <span class="label">预览条数</span>
+          <el-input-number v-model="limit" :min="1" :max="5000" class="ctl-sm" />
+        </div>
+        <div class="actions">
+          <el-button class="btn-stable" type="primary" :loading="loading" @click="fetch">拉取</el-button>
+          <el-button class="btn-stable" type="success" :loading="exporting" @click="openExport">导出</el-button>
+        </div>
       </div>
-      <el-button class="btn-stable" type="primary" :loading="loading" @click="fetch">拉取</el-button>
     </div>
-    <el-table :data="pagedRows" stripe border height="calc(100vh - 280px)" @row-click="showDetail">
+
+    <div class="panel panel-filter">
+      <div class="panel-head">
+        <span class="panel-title">导出筛选</span>
+        <span class="panel-hint">仅导出扫描时生效，可选填</span>
+      </div>
+      <div class="panel-grid panel-grid-filter">
+        <div class="field">
+          <span class="label">Key 包含</span>
+          <el-input v-model="filters.keyContains" clearable placeholder="可选" />
+        </div>
+        <div class="field">
+          <span class="label">Value 包含</span>
+          <el-input v-model="filters.valueContains" clearable placeholder="可选" />
+        </div>
+        <div class="field">
+          <span class="label">Value 正则</span>
+          <el-input v-model="filters.valueRegex" clearable placeholder="可选" />
+        </div>
+        <div class="field">
+          <span class="label">结束时间</span>
+          <el-date-picker
+            v-model="filters.toTime"
+            type="datetime"
+            placeholder="可选"
+            value-format="x"
+            clearable
+            class="ctl-time"
+          />
+        </div>
+      </div>
+    </div>
+
+    <el-table :data="pagedRows" stripe border height="calc(100vh - 380px)" @row-click="showDetail">
       <el-table-column prop="partition" label="P" width="60" />
       <el-table-column prop="offset" label="Offset" width="100" />
       <el-table-column prop="timestamp" label="时间" width="180">
@@ -55,6 +111,17 @@
         layout="total, prev, pager, next, jumper"
         background
       />
+    </div>
+
+    <div v-if="exportLogs.length" class="export-log">
+      <div class="export-log-header">导出进度</div>
+      <el-progress :percentage="exportPercent" :stroke-width="10" style="margin: 8px 0" />
+      <div class="export-log-body">
+        <div v-for="line in exportLogs" :key="line.id" class="export-log-line">
+          <span class="ts">{{ line.ts }}</span>
+          <span>{{ line.message }}</span>
+        </div>
+      </div>
     </div>
 
     <el-drawer v-model="drawer" title="消息详情" size="44%">
@@ -103,23 +170,54 @@
         </div>
       </template>
     </el-drawer>
+
+    <el-dialog v-model="exportVisible" title="扫描导出消息" width="520px">
+      <el-form label-width="110px">
+        <el-form-item label="导出格式">
+          <el-radio-group v-model="exportForm.format">
+            <el-radio-button value="jsonl">JSONL</el-radio-button>
+            <el-radio-button value="csv">CSV</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="最大扫描">
+          <el-input-number v-model="exportForm.maxScan" :min="1" :max="100000" />
+          <span class="hint">上限 100000</span>
+        </el-form-item>
+        <el-form-item label="最大导出">
+          <el-input-number v-model="exportForm.maxExport" :min="1" :max="20000" />
+          <span class="hint">上限 20000（命中条数）</span>
+        </el-form-item>
+        <el-alert
+          type="info"
+          :closable="false"
+          show-icon
+          title="将按「拉取范围」与「导出筛选」扫描集群，边过滤边写入文件。"
+        />
+      </el-form>
+      <template #footer>
+        <el-button @click="exportVisible = false">取消</el-button>
+        <el-button type="primary" :loading="exporting" @click="runExport">开始导出</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { kafkaApi } from '../api/kafka'
+import { EventsOff, EventsOn } from '../../wailsjs/runtime/runtime'
 
 const PAGE_SIZE = 50
 
 const route = useRoute()
 const topics = ref([])
 const topic = ref('')
-const partition = ref(null) // null = 全部分区
+const partition = ref(null)
 const startMode = ref('earliest')
 const customOffset = ref(0)
+const fromTime = ref(null)
 const limit = ref(50)
 const rows = ref([])
 const page = ref(1)
@@ -129,12 +227,33 @@ const drawer = ref(false)
 const current = ref(null)
 const detailMode = ref('meta')
 
+const filters = ref({
+  keyContains: '',
+  valueContains: '',
+  valueRegex: '',
+  toTime: null,
+})
+
+const exportVisible = ref(false)
+const exporting = ref(false)
+const exportForm = ref({ format: 'jsonl', maxScan: 20000, maxExport: 5000 })
+const exportLogs = ref([])
+const exportLatest = ref(null)
+let exportLogSeq = 0
+
 const jsonText = computed(() => JSON.stringify(current.value, null, 2))
 const jsonHtml = computed(() => highlightJson(jsonText.value))
 const valueText = computed(() => {
   if (!current.value) return ''
   if (current.value.value == null) return '(null)'
   return String(current.value.value)
+})
+
+const exportPercent = computed(() => {
+  const p = exportLatest.value
+  if (!p || !p.maxScan) return 0
+  if (p.phase === 'done') return 100
+  return Math.min(99, Math.round((p.scanned / p.maxScan) * 100))
 })
 
 function escapeHtml(s) {
@@ -144,7 +263,6 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;')
 }
 
-/** 轻量 JSON 着色：key / string / number / bool·null */
 function highlightJson(text) {
   if (!text) return ''
   const escaped = escapeHtml(text)
@@ -185,6 +303,15 @@ function formatTs(ts) {
   return new Date(ts).toLocaleString()
 }
 
+function pad(n) {
+  return String(n).padStart(2, '0')
+}
+
+function nowTs() {
+  const d = new Date()
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
 function applyQueryTopic() {
   const q = route.query.topic
   if (q) topic.value = String(q)
@@ -196,22 +323,87 @@ async function loadTopics() {
   applyQueryTopic()
 }
 
+function buildRangeParams() {
+  const params = { topic: topic.value }
+  if (partition.value != null) params.partition = partition.value
+  if (startMode.value === 'custom') params.fromOffset = customOffset.value
+  if (startMode.value === 'time' && fromTime.value != null) {
+    params.fromTimestamp = Number(fromTime.value)
+  }
+  return params
+}
+
 async function fetch() {
   if (!topic.value) return ElMessage.warning('请选择 Topic')
   if (startMode.value === 'custom' && customOffset.value == null) {
     return ElMessage.warning('请填写起始 Offset')
   }
+  if (startMode.value === 'time' && fromTime.value == null) {
+    return ElMessage.warning('请选择起始时间')
+  }
   loading.value = true
   try {
-    const params = { topic: topic.value, limit: limit.value }
-    if (partition.value != null) params.partition = partition.value
-    if (startMode.value === 'custom') params.fromOffset = customOffset.value
+    const params = { ...buildRangeParams(), limit: limit.value }
     const res = await kafkaApi.fetchMessages(params)
     if (!res.ok) return ElMessage.error(res.error)
     rows.value = res.data || []
     page.value = 1
   } finally {
     loading.value = false
+  }
+}
+
+function openExport() {
+  if (!topic.value) return ElMessage.warning('请选择 Topic')
+  exportVisible.value = true
+}
+
+function onExportProgress(prog) {
+  if (!prog) return
+  exportLatest.value = prog
+  exportLogs.value.push({
+    id: ++exportLogSeq,
+    ts: nowTs(),
+    message: prog.message || '',
+  })
+  if (exportLogs.value.length > 80) {
+    exportLogs.value = exportLogs.value.slice(-80)
+  }
+}
+
+async function runExport() {
+  if (!topic.value) return ElMessage.warning('请选择 Topic')
+  if (startMode.value === 'custom' && customOffset.value == null) {
+    return ElMessage.warning('请填写起始 Offset')
+  }
+  if (startMode.value === 'time' && fromTime.value == null) {
+    return ElMessage.warning('请选择起始时间')
+  }
+  exporting.value = true
+  exportLogs.value = []
+  exportLatest.value = { scanned: 0, maxScan: exportForm.value.maxScan, phase: 'start' }
+  exportVisible.value = false
+  try {
+    const params = {
+      ...buildRangeParams(),
+      keyContains: filters.value.keyContains || '',
+      valueContains: filters.value.valueContains || '',
+      valueRegex: filters.value.valueRegex || '',
+      maxScan: exportForm.value.maxScan,
+      maxExport: exportForm.value.maxExport,
+      format: exportForm.value.format,
+    }
+    if (filters.value.toTime != null) {
+      params.toTimestamp = Number(filters.value.toTime)
+    }
+    const res = await kafkaApi.exportMessages(params)
+    if (!res.ok) return ElMessage.error(res.error)
+    const d = res.data || {}
+    const tip = `已导出 ${d.exported || 0} 条 → ${d.path || ''}`
+    if (d.truncated) ElMessage.warning(`${tip}（已达上限）`)
+    else ElMessage.success(tip)
+  } finally {
+    exporting.value = false
   }
 }
 
@@ -231,14 +423,111 @@ async function copyText(text) {
 }
 
 watch(() => route.query.topic, applyQueryTopic)
-onMounted(loadTopics)
+onMounted(() => {
+  loadTopics()
+  EventsOn('export-messages-progress', onExportProgress)
+})
+onUnmounted(() => {
+  EventsOff('export-messages-progress')
+})
 </script>
 
 <style scoped>
-.field { display: flex; align-items: center; gap: 6px; }
-.label { color: #606266; font-size: 13px; white-space: nowrap; }
+.panel {
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 12px 14px 14px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+.panel-filter {
+  background: #fafbfc;
+}
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+}
+.panel-hint {
+  font-size: 12px;
+  color: #909399;
+}
+.panel-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) minmax(120px, 0.7fr) minmax(280px, 1.6fr);
+  gap: 12px 16px;
+  align-items: center;
+}
+.panel-grid-filter {
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+}
+.panel-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e4e7ed;
+}
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.field-start {
+  flex-wrap: wrap;
+}
+.field :deep(.el-input),
+.field :deep(.el-select),
+.field :deep(.el-date-editor),
+.field :deep(.el-input-number) {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+.label {
+  color: #606266;
+  font-size: 13px;
+  white-space: nowrap;
+  flex: none;
+  width: 64px;
+  text-align: right;
+}
+.panel-actions .label { width: auto; }
+.ctl-topic { width: 100%; }
+.ctl-sm { width: 140px !important; flex: none !important; }
+.ctl-time { width: 200px !important; flex: none !important; }
+.hint { margin-left: 8px; color: #909399; font-size: 12px; }
 .btn-stable { min-width: 80px; }
 .pager { display: flex; justify-content: flex-end; margin-top: 12px; }
+.export-log { margin-top: 12px; max-width: 900px; }
+.export-log-header { font-weight: 600; color: #303133; }
+.export-log-body {
+  max-height: 140px;
+  overflow: auto;
+  background: #1f2d3d;
+  color: #d8dee9;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.export-log-line { display: flex; gap: 10px; }
+.export-log-line .ts { color: #88c0d0; flex: none; }
 
 .detail-toolbar { margin-bottom: 12px; }
 .meta-desc { margin-bottom: 14px; }
@@ -294,10 +583,10 @@ onMounted(loadTopics)
   color: #d4d4d4;
   font-family: Consolas, "Courier New", monospace;
 }
-.json-pre :deep(.jk) { color: #9cdcfe; }   /* key */
-.json-pre :deep(.js) { color: #ce9178; }   /* string */
-.json-pre :deep(.jn) { color: #b5cea8; }   /* number */
-.json-pre :deep(.jl) { color: #569cd6; }   /* true/false/null */
+.json-pre :deep(.jk) { color: #9cdcfe; }
+.json-pre :deep(.js) { color: #ce9178; }
+.json-pre :deep(.jn) { color: #b5cea8; }
+.json-pre :deep(.jl) { color: #569cd6; }
 .msg-body {
   margin: 0;
   white-space: pre-wrap;
@@ -308,5 +597,25 @@ onMounted(loadTopics)
 }
 .msg-box-json .msg-body {
   color: #d4d4d4;
+}
+
+@media (max-width: 1100px) {
+  .panel-grid,
+  .panel-grid-filter {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 720px) {
+  .panel-grid,
+  .panel-grid-filter {
+    grid-template-columns: 1fr;
+  }
+  .panel-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .actions {
+    justify-content: flex-end;
+  }
 }
 </style>

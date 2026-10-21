@@ -143,6 +143,40 @@ type FetchMessagesParams struct {
 	Limit         int    `json:"limit,omitempty"`
 }
 
+// ExportMessagesParams 扫描 Topic 并按条件导出消息
+type ExportMessagesParams struct {
+	Topic          string `json:"topic"`
+	Partition      *int32 `json:"partition,omitempty"`
+	FromOffset     *int64 `json:"fromOffset,omitempty"`
+	FromTimestamp  *int64 `json:"fromTimestamp,omitempty"` // 毫秒，按时间定位起点
+	ToTimestamp    *int64 `json:"toTimestamp,omitempty"`   // 毫秒，消息时间上限（本地过滤）
+	KeyContains    string `json:"keyContains,omitempty"`
+	ValueContains  string `json:"valueContains,omitempty"`
+	ValueRegex     string `json:"valueRegex,omitempty"`
+	MaxScan        int    `json:"maxScan,omitempty"`   // 最多扫描条数
+	MaxExport      int    `json:"maxExport,omitempty"` // 最多导出命中条数
+	Format         string `json:"format"`              // jsonl | csv
+}
+
+type ExportMessagesResult struct {
+	Path      string `json:"path"`
+	Scanned   int    `json:"scanned"`
+	Matched   int    `json:"matched"`
+	Exported  int    `json:"exported"`
+	Truncated bool   `json:"truncated"` // 因达到扫描/导出上限而停止
+	Format    string `json:"format"`
+}
+
+type ExportMessagesProgress struct {
+	Phase     string `json:"phase"` // start | progress | done
+	Scanned   int    `json:"scanned"`
+	Matched   int    `json:"matched"`
+	Exported  int    `json:"exported"`
+	MaxScan   int    `json:"maxScan"`
+	MaxExport int    `json:"maxExport"`
+	Message   string `json:"message"`
+}
+
 type ProduceMessageParams struct {
 	Topic     string `json:"topic"`
 	Key       string `json:"key,omitempty"`
@@ -231,6 +265,7 @@ const (
 	ActionUpdatePartitions = "updatePartitions"
 	ActionProduceMessage   = "produceMessage"
 	ActionBulkProduce      = "bulkProduce"
+	ActionExportMessages   = "exportMessages"
 	ActionDeleteGroup      = "deleteGroup"
 	ActionReadBrokerConfig = "readBrokerConfig"
 	ActionSaveBrokerConfig = "saveBrokerConfig"

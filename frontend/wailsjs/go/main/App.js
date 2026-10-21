@@ -38,6 +38,10 @@ export function Disconnect(arg1) {
   return window['go']['main']['App']['Disconnect'](arg1);
 }
 
+export function ExportMessages(arg1) {
+  return window['go']['main']['App']['ExportMessages'](arg1);
+}
+
 export function FetchMessages(arg1) {
   return window['go']['main']['App']['FetchMessages'](arg1);
 }
