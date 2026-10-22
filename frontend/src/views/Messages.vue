@@ -7,27 +7,23 @@
       </div>
     </div>
 
-    <div class="panel">
-      <div class="panel-head">
-        <span class="panel-title">拉取范围</span>
-      </div>
-      <div class="panel-grid">
-        <div class="field">
-          <span class="label">Topic</span>
-          <el-select v-model="topic" filterable placeholder="选择 Topic" class="ctl-topic" @focus="loadTopics">
+    <div class="search-bar">
+      <div class="search-main">
+        <div class="search-fields">
+          <el-select
+            v-model="topic"
+            filterable
+            placeholder="Topic"
+            class="ctl ctl-topic"
+            @focus="loadTopics"
+          >
             <el-option v-for="t in topics" :key="t.name" :label="t.name" :value="t.name" />
           </el-select>
-        </div>
-        <div class="field">
-          <span class="label">分区</span>
-          <el-select v-model="partition" :empty-values="[]" class="ctl-sm">
+          <el-select v-model="partition" :empty-values="[]" placeholder="分区" class="ctl ctl-partition">
             <el-option label="全部分区" :value="null" />
-            <el-option v-for="p in partitionIds" :key="p" :label="p" :value="p" />
+            <el-option v-for="p in partitionIds" :key="p" :label="`分区 ${p}`" :value="p" />
           </el-select>
-        </div>
-        <div class="field field-start">
-          <span class="label">起点</span>
-          <el-select v-model="startMode" class="ctl-sm">
+          <el-select v-model="startMode" placeholder="起点" class="ctl ctl-start">
             <el-option label="从最早开始" value="earliest" />
             <el-option label="从指定位置" value="custom" />
             <el-option label="从时间开始" value="time" />
@@ -38,63 +34,72 @@
             :min="0"
             :precision="0"
             placeholder="Offset"
-            class="ctl-sm"
+            controls-position="right"
+            class="ctl ctl-offset"
           />
           <el-date-picker
-            v-if="startMode === 'time'"
+            v-else-if="startMode === 'time'"
             v-model="fromTime"
             type="datetime"
             placeholder="起始时间"
             value-format="x"
-            class="ctl-time"
+            class="ctl ctl-time"
           />
+          <div class="ctl-limit-wrap">
+            <el-input-number
+              v-model="limit"
+              :min="1"
+              :max="5000"
+              controls-position="right"
+              class="ctl ctl-limit"
+            />
+            <span class="ctl-suffix">条</span>
+          </div>
         </div>
-      </div>
-      <div class="panel-actions">
-        <div class="field">
-          <span class="label">预览条数</span>
-          <el-input-number v-model="limit" :min="1" :max="5000" class="ctl-sm" />
-        </div>
-        <div class="actions">
-          <el-button class="btn-stable" type="primary" :loading="loading" @click="fetch">拉取</el-button>
-          <el-button class="btn-stable" type="success" :loading="exporting" @click="openExport">导出</el-button>
-        </div>
-      </div>
-    </div>
 
-    <div class="panel panel-filter">
-      <div class="panel-head">
-        <span class="panel-title">导出筛选</span>
-        <span class="panel-hint">仅导出扫描时生效，可选填</span>
+        <div class="search-actions">
+          <el-button class="btn-stable" type="primary" :loading="loading" @click="fetch">拉取</el-button>
+          <el-button class="btn-stable" :loading="exporting" @click="openExport">导出</el-button>
+        </div>
       </div>
-      <div class="panel-grid panel-grid-filter">
-        <div class="field">
-          <span class="label">Key 包含</span>
-          <el-input v-model="filters.keyContains" clearable placeholder="可选" />
-        </div>
-        <div class="field">
-          <span class="label">Value 包含</span>
-          <el-input v-model="filters.valueContains" clearable placeholder="可选" />
-        </div>
-        <div class="field">
-          <span class="label">Value 正则</span>
-          <el-input v-model="filters.valueRegex" clearable placeholder="可选" />
-        </div>
-        <div class="field">
-          <span class="label">结束时间</span>
+
+      <div class="search-meta">
+        <button type="button" class="filter-toggle" :class="{ open: filterOpen, active: activeFilterCount }" @click="filterOpen = !filterOpen">
+          <el-icon class="filter-arrow"><ArrowRight /></el-icon>
+          <span>导出筛选</span>
+          <span v-if="activeFilterCount" class="filter-count">{{ activeFilterCount }}</span>
+        </button>
+        <span class="meta-hint">筛选仅在导出扫描时生效</span>
+        <el-button
+          v-if="filterOpen"
+          class="meta-clear"
+          link
+          type="primary"
+          :disabled="!activeFilterCount"
+          @click="clearFilters"
+        >
+          清空
+        </el-button>
+      </div>
+
+      <div v-show="filterOpen" class="search-advanced">
+        <div class="advanced-grid">
+          <el-input v-model="filters.keyContains" clearable placeholder="Key 包含" />
+          <el-input v-model="filters.valueContains" clearable placeholder="Value 包含" />
+          <el-input v-model="filters.valueRegex" clearable placeholder="Value 正则" />
           <el-date-picker
             v-model="filters.toTime"
             type="datetime"
-            placeholder="可选"
+            placeholder="结束时间（可选）"
             value-format="x"
             clearable
-            class="ctl-time"
+            class="ctl-time-full"
           />
         </div>
       </div>
     </div>
 
-    <el-table :data="pagedRows" stripe border height="calc(100vh - 380px)" @row-click="showDetail">
+    <el-table :data="pagedRows" stripe border :height="tableHeight" @row-click="showDetail">
       <el-table-column prop="partition" label="P" width="60" />
       <el-table-column prop="offset" label="Offset" width="100" />
       <el-table-column prop="timestamp" label="时间" width="180">
@@ -233,6 +238,7 @@ const filters = ref({
   valueRegex: '',
   toTime: null,
 })
+const filterOpen = ref(false)
 
 const exportVisible = ref(false)
 const exporting = ref(false)
@@ -255,6 +261,29 @@ const exportPercent = computed(() => {
   if (p.phase === 'done') return 100
   return Math.min(99, Math.round((p.scanned / p.maxScan) * 100))
 })
+
+const activeFilterCount = computed(() => {
+  const f = filters.value
+  let n = 0
+  if (f.keyContains?.trim()) n++
+  if (f.valueContains?.trim()) n++
+  if (f.valueRegex?.trim()) n++
+  if (f.toTime != null && f.toTime !== '') n++
+  return n
+})
+
+const tableHeight = computed(() =>
+  filterOpen.value ? 'calc(100vh - 300px)' : 'calc(100vh - 230px)',
+)
+
+function clearFilters() {
+  filters.value = {
+    keyContains: '',
+    valueContains: '',
+    valueRegex: '',
+    toTime: null,
+  }
+}
 
 function escapeHtml(s) {
   return String(s)
@@ -433,85 +462,136 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.panel {
+.search-bar {
+  margin-bottom: 12px;
   border: 1px solid #ebeef5;
   border-radius: 8px;
-  padding: 12px 14px 14px;
-  margin-bottom: 12px;
   background: #fff;
+  overflow: hidden;
 }
-.panel-filter {
-  background: #fafbfc;
-}
-.panel-head {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.panel-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #303133;
-}
-.panel-hint {
-  font-size: 12px;
-  color: #909399;
-}
-.panel-grid {
-  display: grid;
-  grid-template-columns: minmax(220px, 1.4fr) minmax(120px, 0.7fr) minmax(280px, 1.6fr);
-  gap: 12px 16px;
-  align-items: center;
-}
-.panel-grid-filter {
-  grid-template-columns: repeat(4, minmax(140px, 1fr));
-}
-.panel-actions {
+.search-main {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed #e4e7ed;
+  gap: 16px;
+  padding: 12px 14px 10px;
 }
-.actions {
+.search-fields {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-.field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.field-start {
   flex-wrap: wrap;
-}
-.field :deep(.el-input),
-.field :deep(.el-select),
-.field :deep(.el-date-editor),
-.field :deep(.el-input-number) {
-  flex: 1;
+  gap: 8px;
+  flex: 1 1 auto;
   min-width: 0;
-  width: 100%;
 }
-.label {
+.search-fields .ctl {
+  flex: none;
+}
+.ctl-topic {
+  width: 260px;
+  max-width: 100%;
+}
+.ctl-partition {
+  width: 120px;
+}
+.ctl-start {
+  width: 140px;
+}
+.ctl-offset {
+  width: 140px;
+}
+.ctl-time {
+  width: 200px;
+}
+.ctl-limit-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ctl-limit {
+  width: 110px;
+}
+.ctl-suffix {
+  color: #909399;
+  font-size: 13px;
+  flex: none;
+}
+.search-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding-left: 16px;
+  border-left: 1px solid #ebeef5;
+}
+.search-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px 10px;
+  min-height: 28px;
+}
+.filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: transparent;
   color: #606266;
   font-size: 13px;
-  white-space: nowrap;
-  flex: none;
-  width: 64px;
-  text-align: right;
+  cursor: pointer;
+  line-height: 1;
 }
-.panel-actions .label { width: auto; }
-.ctl-topic { width: 100%; }
-.ctl-sm { width: 140px !important; flex: none !important; }
-.ctl-time { width: 200px !important; flex: none !important; }
+.filter-toggle:hover,
+.filter-toggle.open,
+.filter-toggle.active {
+  color: #409eff;
+}
+.filter-arrow {
+  transition: transform 0.15s ease;
+  font-size: 12px;
+}
+.filter-toggle.open .filter-arrow {
+  transform: rotate(90deg);
+}
+.filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #409eff;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+}
+.meta-hint {
+  font-size: 12px;
+  color: #c0c4cc;
+}
+.meta-clear {
+  margin-left: auto;
+}
+.search-advanced {
+  border-top: 1px solid #f0f2f5;
+  background: #fafbfc;
+  padding: 10px 14px 12px;
+}
+.advanced-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px 10px;
+}
+.ctl-time-full {
+  width: 100% !important;
+}
+.ctl-time-full :deep(.el-input__wrapper) {
+  width: 100%;
+}
 .hint { margin-left: 8px; color: #909399; font-size: 12px; }
-.btn-stable { min-width: 80px; }
+.btn-stable { min-width: 72px; }
 .pager { display: flex; justify-content: flex-end; margin-top: 12px; }
 .export-log { margin-top: 12px; max-width: 900px; }
 .export-log-header { font-weight: 600; color: #303133; }
@@ -600,22 +680,43 @@ onUnmounted(() => {
 }
 
 @media (max-width: 1100px) {
-  .panel-grid,
-  .panel-grid-filter {
-    grid-template-columns: 1fr 1fr;
+  .advanced-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ctl-topic {
+    width: 200px;
   }
 }
-@media (max-width: 720px) {
-  .panel-grid,
-  .panel-grid-filter {
+@media (max-width: 900px) {
+  .search-main {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .search-actions {
+    width: 100%;
+    justify-content: flex-end;
+    padding-left: 0;
+    border-left: none;
+    padding-top: 8px;
+    border-top: 1px solid #ebeef5;
+  }
+  .advanced-grid {
     grid-template-columns: 1fr;
   }
-  .panel-actions {
-    flex-direction: column;
-    align-items: stretch;
+  .ctl-topic,
+  .ctl-partition,
+  .ctl-start,
+  .ctl-offset,
+  .ctl-time {
+    width: 100%;
+    flex: 1 1 100%;
   }
-  .actions {
-    justify-content: flex-end;
+  .ctl-limit-wrap {
+    width: 100%;
+  }
+  .ctl-limit {
+    flex: 1 1 auto;
+    width: auto;
   }
 }
 </style>

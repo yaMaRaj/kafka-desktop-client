@@ -65,8 +65,10 @@
       </el-table-column>
       <el-table-column label="Topic" min-width="220" show-overflow-tooltip>
         <template #default="{ row }">
-          <el-button link type="primary" class="topic-name" @click="openDetail(row)">{{ row.name }}</el-button>
-          <el-tag v-if="row.isInternal" size="small" type="info" class="internal-tag">内部</el-tag>
+          <div class="topic-cell">
+            <el-button link type="primary" class="topic-name" @click="openDetail(row)">{{ row.name }}</el-button>
+            <el-tag v-if="row.isInternal" size="small" type="info" class="internal-tag">内部</el-tag>
+          </div>
         </template>
       </el-table-column>
       <el-table-column label="消息数" min-width="110" align="right" sortable :sort-method="(a, b) => (a.recordCount || 0) - (b.recordCount || 0)">
@@ -83,7 +85,7 @@
         <template #default="{ row }">{{ row.partitions?.length || 0 }}</template>
       </el-table-column>
       <el-table-column prop="replicationFactor" label="副本" width="72" align="center" />
-      <el-table-column label="操作" width="148" class-name="ops-col">
+      <el-table-column label="操作" width="110" class-name="ops-col">
         <template #default="{ row }">
           <div class="ops-cell">
             <button type="button" class="ops-link" @click.stop="jump('/messages', row)">浏览</button>
@@ -356,8 +358,31 @@ onMounted(load)
   color: #606266; font-size: 13px; margin-bottom: 8px;
 }
 .drawer-actions { margin: 14px 0 8px; display: flex; gap: 8px; }
-.topic-name { font-weight: 600; vertical-align: middle; }
-.internal-tag { margin-left: 6px; vertical-align: middle; }
+.topic-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+.topic-name {
+  font-weight: 600;
+  min-width: 0;
+  max-width: 100%;
+  flex: 1 1 auto;
+  height: auto;
+  padding: 0;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.topic-name :deep(span) {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.internal-tag { flex: none; }
 .num { font-variant-numeric: tabular-nums; }
 
 .health {
@@ -403,6 +428,8 @@ onMounted(load)
   align-items: center;
   min-height: 24px;
   line-height: 24px;
+  min-width: 0;
+  overflow: hidden;
 }
 .topics-table :deep(.is-right .cell) { justify-content: flex-end; }
 .topics-table :deep(.is-center .cell) { justify-content: center; }
@@ -414,7 +441,7 @@ onMounted(load)
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 8px;
   height: 24px;
   width: 100%;
 }
